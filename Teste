@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrada de Texto para Feição</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Definir Valor Padrão para os Registros</h2>
+    <input type="text" id="inputText" placeholder="Digite o valor fixo">
+    <button onclick="salvarValor()">Salvar</button>
+
+    <h3>Valor Atual: <span id="valorAtual">Nenhum</span></h3>
+
+    <button onclick="adicionarRegistro()">Adicionar Registro</button>
+    
+    <script>
+        const featureLayerURL = "https://services7.arcgis.com/SEU_SERVICO/arcgis/rest/services/SUA_FEATURE_LAYER/FeatureServer/0"; // Substitua pela sua camada
+
+        // Carregar o valor salvo anteriormente
+        document.addEventListener("DOMContentLoaded", function() {
+            const valorSalvo = localStorage.getItem("valor_fixo");
+            if (valorSalvo) {
+                document.getElementById("valorAtual").innerText = valorSalvo;
+            }
+        });
+
+        function salvarValor() {
+            const valor = document.getElementById("inputText").value;
+            if (valor.trim() !== "") {
+                localStorage.setItem("valor_fixo", valor);
+                document.getElementById("valorAtual").innerText = valor;
+                alert("Valor salvo com sucesso!");
+            } else {
+                alert("Digite um valor antes de salvar.");
+            }
+        }
+
+        function adicionarRegistro() {
+            const valorFixo = localStorage.getItem("valor_fixo");
+            if (!valorFixo) {
+                alert("Defina um valor antes de criar registros.");
+                return;
+            }
+
+            const dados = {
+                features: [
+                    {
+                        attributes: {
+                            "SEU_CAMPO_ALVO": valorFixo,  // Substitua pelo nome do campo correto
+                            "created_date": Date.now() // Exemplo de outro campo preenchido
+                        }
+                    }
+                ],
+                f: "json"
+            };
+
+            fetch(`${featureLayerURL}/addFeatures`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ features: JSON.stringify(dados.features), f: "json" })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.addResults && data.addResults[0].success) {
+                    alert("Registro adicionado com sucesso!");
+                } else {
+                    alert("Erro ao adicionar registro.");
+                    console.error("Erro:", data);
+                }
+            })
+            .catch(error => {
+                alert("Erro ao se conectar com o servidor.");
+                console.error("Erro:", error);
+            });
+        }
+    </script>
+
+</body>
+</html>
